@@ -1,5 +1,5 @@
-from .synthesizer import PollySynthesizer, ElevenlabsSynthesizer, OPENAISynthesizer, DeepgramSynthesizer, AzureSynthesizer, CartesiaSynthesizer, SmallestSynthesizer, SarvamSynthesizer, RimeSynthesizer
-from .transcriber import DeepgramTranscriber, WhisperTranscriber, AzureTranscriber
+from .synthesizer import PollySynthesizer, ElevenlabsSynthesizer, OPENAISynthesizer, DeepgramSynthesizer, AzureSynthesizer, CartesiaSynthesizer, SmallestSynthesizer, SarvamSynthesizer, RimeSynthesizer, InWorldSynthesizer
+from .transcriber import DeepgramTranscriber, WhisperTranscriber, AzureTranscriber, AssemblyAITranscriber
 from .input_handlers import DefaultInputHandler, TwilioInputHandler, ExotelInputHandler, PlivoInputHandler, DailyInputHandler
 from .output_handlers import DefaultOutputHandler, TwilioOutputHandler, ExotelOutputHandler, PlivoOutputHandler, DailyOutputHandler
 from .llms import OpenAiLLM, LiteLLM
@@ -13,13 +13,15 @@ SUPPORTED_SYNTHESIZER_MODELS = {
     'cartesia': CartesiaSynthesizer,
     'smallest': SmallestSynthesizer,
     'sarvam': SarvamSynthesizer,
-    'rime': RimeSynthesizer
+    'rime': RimeSynthesizer,
+    'inworld': InWorldSynthesizer
 }
 
 SUPPORTED_TRANSCRIBER_PROVIDERS = {
     'deepgram': DeepgramTranscriber,
     'whisper': WhisperTranscriber,
-    'azure': AzureTranscriber
+    'azure': AzureTranscriber,
+    'assemblyai': AssemblyAITranscriber
 }
 
 #Backwards compatibility

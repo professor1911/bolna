@@ -73,6 +73,20 @@ class AzureConfig(BaseModel):
     language: str
 
 
+class InWorldConfig(BaseModel):
+    voice: str
+    voice_id: str
+    model: str
+    temperature: Optional[float] = 0.5
+
+
+class AssemblyAIConfig(BaseModel):
+    model: str
+    language: Optional[str] = "en"
+    encoding: Optional[str] = "pcm_s16le"
+    sampling_rate: Optional[int] = 16000
+
+
 class Transcriber(BaseModel):
     model: Optional[str] = "nova-2"
     language: Optional[str] = None
@@ -91,7 +105,7 @@ class Transcriber(BaseModel):
 
 class Synthesizer(BaseModel):
     provider: str
-    provider_config: Union[PollyConfig, ElevenLabsConfig, AzureConfig, RimeConfig, SmallestConfig, SarvamConfig, CartesiaConfig, DeepgramConfig, OpenAIConfig] = Field(union_mode='smart')
+    provider_config: Union[PollyConfig, ElevenLabsConfig, AzureConfig, RimeConfig, SmallestConfig, SarvamConfig, CartesiaConfig, DeepgramConfig, OpenAIConfig, InWorldConfig] = Field(union_mode='smart')
     stream: bool = False
     buffer_size: Optional[int] = 40  # 40 characters in a buffer
     audio_format: Optional[str] = "pcm"
@@ -99,7 +113,7 @@ class Synthesizer(BaseModel):
 
     @field_validator("provider")
     def validate_model(cls, value):
-        return validate_attribute(value, ["polly", "elevenlabs", "openai", "deepgram", "azuretts", "cartesia", "smallest", "sarvam", "rime"])
+        return validate_attribute(value, ["polly", "elevenlabs", "openai", "deepgram", "azuretts", "cartesia", "smallest", "sarvam", "rime", "inworld"])
 
 
 
