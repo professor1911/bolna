@@ -1,55 +1,125 @@
 From 1234567890abcdef1234567890abcdef12345678 Mon Sep 17 00:00:00 2001
-From: professor1911 bhawarvaibhav7@gmail.com
-Date: Thu, 6 Jun 2024 12:00:00 +0000
-Subject: [PATCH] Add NewProvider, update providers.py, and edit .env.sample
+From: Vaibhav Shivaji Bhawar <evilgaming260@gmail.com>
+Date:   Sun Sep 7 21:30:00 2025 +0530
+Subject: [PATCH] Added InWorldSynthesizer & AssemblyAITranscriber support
 
 ---
- providers.py         | 10 ++++++++++
- providers/new_provider.py | 25 +++++++++++++++++++++++++
- .env.sample          |  2 ++
- 3 files changed, 37 insertions(+)
+ bolna/agents/models.py        | 20 ++++++++++++----
+ bolna/providers/__init__.py   |  2 ++
+ bolna/providers/assemblyai.py | 34 +++++++++++++++++++++++++++
+ bolna/providers/inworld.py    | 47 ++++++++++++++++++++++++++++++++++++
+ .env.example                  |  2 ++
+ 5 files changed, 101 insertions(+), 4 deletions(-)
+ create mode 100644 bolna/providers/assemblyai.py
+ create mode 100644 bolna/providers/inworld.py
 
-diff --git a/providers.py b/providers.py
-index abcdef1..1234567 100644
---- a/providers.py
-+++ b/providers.py
-@@ ... @@
-+from providers.new_provider import NewProvider
-+
-+# Add NewProvider to the list of available providers
-+PROVIDERS = [
-+    # ... existing providers
-+    NewProvider(),
-+]
-+
-+# ... rest of the file
-diff --git a/providers/new_provider.py b/providers/new_provider.py
-new file mode 100644
-index 0000000..abcdef1
---- /dev/null
-+++ b/providers/new_provider.py
-@@ ... @@
-+class NewProvider:
-+    def __init__(self):
-+        self.name = "NewProvider"
-+        # Initialize provider-specific settings here
-+
-+    def authenticate(self, credentials):
-+        # Implement authentication logic
-+        pass
-+
-+    def fetch_data(self, query):
-+        # Implement data fetching logic
-+        pass
-+
-+    def __str__(self):
-+        return f"Provider: {self.name}"
-diff --git a/.env.sample b/.env.sample
+diff --git a/.env.example b/.env.example
 index 1234567..89abcde 100644
---- a/.env.sample
-+++ b/.env.sample
-@@ ... @@
-+# NewProvider credentials
-+NEW_PROVIDER_API_KEY=your_api_key_here
--- 
-2.42.0
+--- a/.env.example
++++ b/.env.example
+@@ -5,3 +5,5 @@
+ OPENAI_API_KEY=your_openai_api_key
+ ANTHROPIC_API_KEY=your_anthropic_api_key
+ GOOGLE_API_KEY=your_google_api_key
+ GROQ_API_KEY=your_groq_api_key
++ASSEMBLYAI_API_KEY=your_assemblyai_api_key
++INWORLD_API_KEY=your_inworld_api_key
+
+diff --git a/bolna/agents/models.py b/bolna/agents/models.py
+index abc1234..def5678 100644
+--- a/bolna/agents/models.py
++++ b/bolna/agents/models.py
+@@ -45,10 +45,22 @@
+-    provider: str
+-    model: str
+-    voice: str
+-    format: str
++    provider: str  # e.g., "openai", "inworld"
++    model: str     # model name
++    voice: str     # voice style
++    format: str    # output format
++
++
++class InWorldSynthesizer(Synthesizer):
++    provider: str = "inworld"
++    model: str = "default"
++    voice: str = "default"
++    format: str = "mp3"
++
++
++class AssemblyAITranscriber(BaseModel):
++    provider: str = "assemblyai"
++    model: str = "default"
+
+diff --git a/bolna/providers/__init__.py b/bolna/providers/__init__.py
+index 1111111..2222222 100644
+--- a/bolna/providers/__init__.py
++++ b/bolna/providers/__init__.py
+@@ -1,3 +1,5 @@
+ from .openai import OpenAISynthesizer
+ from .anthropic import AnthropicSynthesizer
+ from .google import GoogleSynthesizer
++from .inworld import InWorldSynthesizer
++from .assemblyai import AssemblyAITranscriber
+
+diff --git a/bolna/providers/assemblyai.py b/bolna/providers/assemblyai.py
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/bolna/providers/assemblyai.py
+@@ -0,0 +1,34 @@
++import os
++import requests
++
++class AssemblyAITranscriber:
++    def __init__(self, api_key: str = None):
++        self.api_key = api_key or os.getenv("ASSEMBLYAI_API_KEY")
++        self.base_url = "https://api.assemblyai.com/v2"
++
++    def transcribe(self, audio_url: str) -> str:
++        headers = {"authorization": self.api_key}
++        response = requests.post(
++            f"{self.base_url}/transcribe",
++            json={"audio_url": audio_url},
++            headers=headers,
++        )
++        response.raise_for_status()
++        job = response.json()
++        transcript_id = job["id"]
++
++        # Poll until completion
++        while True:
++            result = requests.get(f"{self.base_url}/transcribe/{transcript_id}", headers=headers)
++            result.raise_for_status()
++            data = result.json()
++            if data["status"] == "completed":
++                return data["text"]
++            elif data["status"] == "error":
++                raise Exception(data["error"])
+
+diff --git a/bolna/providers/inworld.py b/bolna/providers/inworld.py
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/bolna/providers/inworld.py
+@@ -0,0 +1,47 @@
++import os
++import requests
++
++class InWorldSynthesizer:
++    def __init__(self, api_key: str = None):
++        self.api_key = api_key or os.getenv("INWORLD_API_KEY")
++        self.base_url = "https://studio.inworld.ai/api/v1"
++
++    def synthesize(self, text: str, voice: str = "default") -> bytes:
++        headers = {
++            "Authorization": f"Bearer {self.api_key}",
++            "Content-Type": "application/json",
++        }
++        response = requests.post(
++            f"{self.base_url}/generate/audio",
++            json={"text": text, "voice": voice},
++            headers=headers,
++        )
++        response.raise_for_status()
++        return response.content
